@@ -4,7 +4,7 @@ import java.util.*;
 
 /**
  * Klasa oceniająca skuteczność klasyfikatora na podstawie Macierzy Pomyłek.
- * Implementuje wzory ze sprawozdania (Tydzień 04).
+ * Implementuje wzory ze sprawozdania (Tydzień 04) oraz zbiera dane do macierzy pomyłek.
  */
 public class Evaluator {
 
@@ -28,12 +28,22 @@ public class Evaluator {
     // nk: całkowita liczba dokumentów w rzeczywistości należących do klasy k
     private Map<String, Integer> actualCounts = new HashMap<>();
 
+    // Macierz pomyłek: [Klasa Rzeczywista] -> [Klasa Przewidziana] -> Liczba wystąpień
+    private Map<String, Map<String, Integer>> confusionMatrix = new HashMap<>();
+
     public Evaluator() {
         for (String c : CLASSES) {
             truePositives.put(c, 0);
             falsePositives.put(c, 0);
             falseNegatives.put(c, 0);
             actualCounts.put(c, 0);
+            
+            // Inicjalizacja macierzy pomyłek zerami dla każdej pary klas
+            Map<String, Integer> predictionsForClass = new HashMap<>();
+            for (String predClass : CLASSES) {
+                predictionsForClass.put(predClass, 0);
+            }
+            confusionMatrix.put(c, predictionsForClass);
         }
     }
 
@@ -47,6 +57,9 @@ public class Evaluator {
 
         totalPredictions++;
         actualCounts.put(actual, actualCounts.get(actual) + 1);
+        
+        // Zapis do macierzy pomyłek
+        confusionMatrix.get(actual).put(predicted, confusionMatrix.get(actual).get(predicted) + 1);
 
         if (actual.equals(predicted)) {
             // Sukces! (Tk)
@@ -59,6 +72,16 @@ public class Evaluator {
             // Było "actual", ale go nie wykryto (F~k dla actual)
             falseNegatives.put(actual, falseNegatives.get(actual) + 1);
         }
+    }
+
+    /**
+     * Zwraca liczbę wystąpień danej pary (Rzeczywista, Przewidziana) do budowy tabeli.
+     */
+    public int getCount(String actual, String predicted) {
+        if (!confusionMatrix.containsKey(actual) || !confusionMatrix.get(actual).containsKey(predicted)) {
+            return 0;
+        }
+        return confusionMatrix.get(actual).get(predicted);
     }
 
     /**

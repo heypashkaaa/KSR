@@ -18,7 +18,7 @@ public class Main {
         for (Article a : articles) {
             allVectors.add(extractor.extractFeatures(a));
         }
-        // Fixed seed for reproducibility
+        // Fixed seed for reproducibility - zbiór mieszany zawsze tak samo
         Collections.shuffle(allVectors, new Random(42)); 
 
         // Default mask (all 12 features active)
@@ -30,13 +30,13 @@ public class Main {
 
         // --- EXPERIMENT 1: K-Value Tuning ---
         finalReport.append("## 1. Performance depending on K parameter (Metric: EUCLIDEAN, Split: 60/40)\n");
-        int[] kValues = {1, 2, 3, 5, 7, 10, 15, 20, 30, 50};
+        int[] kValues = {1, 3, 5, 10, 25, 30, 50, 80, 100};
         double bestAcc = -1;
         int bestK = 5;
         
         for (int k : kValues) {
             Evaluator res = runTest(allVectors, 0.6, k, KNNClassifier.DistanceMetric.EUCLIDEAN, allFeatures);
-            finalReport.append(String.format("- K=%2d: Global Accuracy=%.4f\n", k, res.getAccuracy()));
+            finalReport.append(String.format("- K=%2d: Accuracy=%.4f\n", k, res.getAccuracy()));
             
             if (res.getAccuracy() > bestAcc) {
                 bestAcc = res.getAccuracy();
@@ -50,7 +50,7 @@ public class Main {
         double[] splits = {0.2, 0.4, 0.6, 0.8, 0.9};
         for (double s : splits) {
             Evaluator res = runTest(allVectors, s, bestK, KNNClassifier.DistanceMetric.EUCLIDEAN, allFeatures);
-            finalReport.append(String.format("- Split %2.0f/%2.0f: Global Accuracy=%.4f\n", 
+            finalReport.append(String.format("- Split %2.0f/%2.0f: Accuracy=%.4f\n", 
                     s*100, (1-s)*100, res.getAccuracy()));
         }
 
@@ -58,55 +58,70 @@ public class Main {
         finalReport.append("\n## 3. Performance depending on Distance Metric (K=").append(bestK).append(", Split: 60/40)\n");
         for (KNNClassifier.DistanceMetric m : KNNClassifier.DistanceMetric.values()) {
             Evaluator res = runTest(allVectors, 0.6, bestK, m, allFeatures);
-            finalReport.append(String.format("- %-10s: Global Accuracy=%.4f\n", m.name(), res.getAccuracy()));
+            finalReport.append(String.format("- %-10s: Accuracy=%.4f\n", m.name(), res.getAccuracy()));
         }
 
-        // --- EXPERIMENT 4: Feature Subsets (Detailed Class Report) ---
+        // --- EXPERIMENT 4: Feature Subsets & Confusion Matrix ---
         finalReport.append("\n## 4. Impact of Feature Subsets (K=").append(bestK).append(", Metric: EUCLIDEAN, Split: 60/40)\n");
         
         Map<String, BitSet> subsets = new LinkedHashMap<>();
         
-        // Subset 1: All features
-        subsets.put("All Features (12)", allFeatures);
+        BitSet noDateline = new BitSet(12); 
+        noDateline.set(0, 12); // Włączamy wszystkie...
+        noDateline.clear(9);  
+        subsets.put("Bez najsilniejszej cechy (Brak F9 Dateline)", noDateline);
         
-        // Subset 2: Only Numerical (F1-F6, F8, F12 -> indices 0 to 7)
         BitSet onlyNumeric = new BitSet(12); 
         onlyNumeric.set(0, 8);
         subsets.put("Numeric Only (F1-F6, F8, F12)", onlyNumeric);
         
-        // Subset 3: Only Textual (F7, F9, F10, F11 -> indices 8 to 11)
         BitSet onlyText = new BitSet(12); 
         onlyText.set(8, 12);
         subsets.put("Textual Only (F7, F9-F11)", onlyText);
         
-        // Subset 4: Country-Specific Only (F1-F6 and F11) - Smartest subset
         BitSet countrySpecific = new BitSet(12); 
-        countrySpecific.set(0, 6); // F1 to F6 (indices 0-5)
-        countrySpecific.set(11);   // F11 (First Country mentioned -> index 11)
+        countrySpecific.set(0, 6); 
+        countrySpecific.set(11);   
         subsets.put("Country-Specific Only (F1-F6, F11)", countrySpecific);
 
         for (Map.Entry<String, BitSet> entry : subsets.entrySet()) {
             Evaluator res = runTest(allVectors, 0.6, bestK, KNNClassifier.DistanceMetric.EUCLIDEAN, entry.getValue());
             finalReport.append(String.format("\n### Subset: %s\n", entry.getKey()));
-            finalReport.append(String.format("**Global Accuracy : %.4f**\n\n", res.getAccuracy()));
+            finalReport.append(String.format("**Accuracy : %.4f**\n\n", res.getAccuracy()));
             
-            // Generate Markdown Table for individual classes
+            // Tabela metryk
             finalReport.append("| Class Name | Precision | Recall | F1-Score |\n");
             finalReport.append("|------------|-----------|--------|----------|\n");
-            
             for (String c : classNames) {
                 finalReport.append(String.format("| %-10s | %.4f    | %.4f | %.4f   |\n", 
                         c, res.getPrecision(c), res.getRecall(c), res.getF1Score(c)));
             }
+
+            // ============================================
+            // DODANA MACIERZ POMYŁEK (CONFUSION MATRIX)
+            // ============================================
+            finalReport.append("\n#### Confusion Matrix (Wiersze: Rzeczywista, Kolumny: Przewidziana)\n");
+            finalReport.append("| Klasa | ").append(String.join(" | ", classNames)).append(" |\n");
+            finalReport.append("|---").append("|---".repeat(classNames.length)).append("|\n");
+
+            for (String actual : classNames) {
+                finalReport.append("| **").append(actual).append("** | ");
+                for (String predicted : classNames) {
+                    int count = res.getCount(actual, predicted); 
+                    finalReport.append(count).append(" | ");
+                }
+                finalReport.append("\n");
+            }
+            finalReport.append("\n");
         }
 
         // FINAL OUTPUT
         System.out.println(finalReport.toString());
         
         // Save to Markdown file
-        try (PrintWriter out = new PrintWriter("experiments_report.md")) {
+        try (PrintWriter out = new PrintWriter("experiments_report_upd.md")) {
             out.println(finalReport.toString());
-            System.out.println("\n>>> Report successfully saved to: experiments_report.md");
+            System.out.println("\n>>> Report successfully saved to: experiments_report_upd.md");
         } catch (Exception e) { 
             e.printStackTrace(); 
         }
@@ -135,6 +150,7 @@ public class Main {
         PriorityQueue<Object[]> pq = new PriorityQueue<>((a, b) -> Double.compare((double)b[1], (double)a[1]));
         
         for (FeatureVector tr : train) {
+            // WSKAZÓWKA: Tutaj lub na wektorach wejściowych warto upewnić się, że dane są znormalizowane!
             double distance = Metrics.calculateDistance(test, tr, metric, mask);
             pq.add(new Object[]{tr.getLabel(), distance});
             if (pq.size() > k) {
