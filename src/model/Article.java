@@ -8,14 +8,18 @@ public class Article {
    
     private String text;  
     private String label; 
+    private String Dateline;
 
   
-    public Article(String text, String label) {
+    public Article(String text, String label, String dateline) {
         this.text = text;
         this.label = label;
+        this.Dateline = dateline;
     }
 
-  
+    public String getDateline() {
+        return Dateline;
+    }
 
     public String getText() {
         return text;

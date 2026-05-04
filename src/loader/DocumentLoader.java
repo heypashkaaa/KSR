@@ -64,10 +64,11 @@ public class DocumentLoader {
                 
                 if (ALLOWED_PLACES.contains(label)) {
                     String bodyText = extractTagContent(reutersBlock, "<BODY>", "</BODY>");
+                    String dateline = extractTagContent(reutersBlock, "<DATELINE>", "</DATELINE>");
                     
                     if (bodyText != null && !bodyText.trim().isEmpty()) {
                         bodyText = bodyText.replace("&#3;", "").trim();
-                        articles.add(new Article(bodyText, label));
+                        articles.add(new Article(bodyText, label, dateline));
                     }
                 }
             }

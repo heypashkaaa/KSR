@@ -17,18 +17,27 @@ public class FeatureExtractor {
         "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on", "off", 
         "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", 
         "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", 
-        "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "don", "should", "now"
+        "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "don", "should", "now", "reuter"
     );
 
     private static final Set<String> POLITICIANS = Set.of(
-        "kohl","mulroney", "wilson", "chretien", "broadbent", "hurd", "tebbit", "genscher", "strauss", "weizsaecker", "stoltenberg", "thatcher", "lawson", "howe"
+        "kohl", "genscher", "stoltenberg", "strauss", "weizsaecker",
+        "thatcher", "lawson", "hurd", "howe", "tebbit",
+        "mulroney", "wilson", "chretien", "broadbent"
     );
 
     private static final Set<String> CITIES = Set.of(
-         "london", "birmingham", "glasgow", "edinburgh",
+         "frankfurt", "bonn", "hamburg", "munich", "stuttgart", "dusseldorf", "cologne", "essen", "bremen", "berlin",
+        "london", "birmingham", "manchester", "glasgow", "liverpool", "bristol", "edinburgh",
+        "ottawa", "toronto", "montreal", "calgary", "vancouver", "winnipeg", "edmonton", "hamilton", "quebec", "halifax" 
+    );
+
+    private static final Set<String> DATELINE_CITIES = Set.of(
+         "washington", "new york","chicago","los angeles","san francisco","boston","atlanta","dallas","houston","philadelphia","miami", "london", "birmingham", "glasgow", "edinburgh",
         "manchester","liverpool","bristol", "bonn", "frankfurt", "munich",
         "hamburg", "berlin", "dusseldorf", "stuttgart", "cologne", "essen", "bremen",
-         "ottawa", "toronto", "montreal", "vancouver", "calgary", "winnipeg","edmonton", "hamilton", "quebec", "halifax"
+         "ottawa", "toronto", "montreal", "vancouver", "calgary", "winnipeg","edmonton", "hamilton", "quebec", "halifax",
+         "paris", "lyon", "marseille", "strasbourg", "tokyo", "osaka", "yokohama", "nagoya"
     );
 
     private static final List<String> CURRENCIES = Arrays.asList("ypy", "frf", "dem", "cad", "usd", "gbp");
@@ -140,11 +149,13 @@ public class FeatureExtractor {
         }
 
         String datelineCity = "None";
-        for (int i = 0; i < Math.min(10, cleanWords.size()); i++) {
-            String checkCity = cleanWords.get(i).replace("_", " ");
-            if (CITIES.contains(checkCity)) {
-                datelineCity = checkCity.toUpperCase();
-                break;
+        String rawDateline = article.getDateline();
+
+        if (rawDateline != null && !rawDateline.trim().isEmpty()) {
+            String extractedCity = rawDateline.split(",")[0].trim().toLowerCase();
+            
+            if (DATELINE_CITIES.contains(extractedCity)) {
+                datelineCity = extractedCity.toUpperCase();
             }
         }
 
