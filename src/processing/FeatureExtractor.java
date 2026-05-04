@@ -21,17 +21,14 @@ public class FeatureExtractor {
     );
 
     private static final Set<String> POLITICIANS = Set.of(
-        "reagan", "baker", "volcker", "greenspan", "bush", "thatcher", "lawson", "mitterrand",
-        "chirac", "balladur", "kohl", "stoltenberg", "poehl", "pohl", "nakasone", "takeshita",
-        "miyazawa", "sumita", "mulroney", "wilson"
+        "kohl","mulroney", "wilson", "chretien", "broadbent", "hurd", "tebbit", "genscher", "strauss", "weizsaecker", "stoltenberg", "thatcher", "lawson", "howe"
     );
 
     private static final Set<String> CITIES = Set.of(
-        "washington", "new york", "chicago", "los angeles", "san francisco", "boston", "atlanta",
-        "dallas", "houston", "philadelphia", "miami", "london", "birmingham", "glasgow", "edinburgh",
-        "manchester", "paris", "lyon", "marseille", "strasbourg", "bonn", "frankfurt", "munich",
-        "hamburg", "berlin", "dusseldorf", "stuttgart", "cologne", "tokyo", "osaka", "yokohama",
-        "nagoya", "ottawa", "toronto", "montreal", "vancouver", "calgary", "winnipeg"
+         "london", "birmingham", "glasgow", "edinburgh",
+        "manchester","liverpool","bristol", "bonn", "frankfurt", "munich",
+        "hamburg", "berlin", "dusseldorf", "stuttgart", "cologne", "essen", "bremen",
+         "ottawa", "toronto", "montreal", "vancouver", "calgary", "winnipeg","edmonton", "hamilton", "quebec", "halifax"
     );
 
     private static final List<String> CURRENCIES = Arrays.asList("ypy", "frf", "dem", "cad", "usd", "gbp");

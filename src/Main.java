@@ -14,19 +14,34 @@ public class Main {
         List<Article> articles = loader.loadFromDirectory("data");
         FeatureExtractor extractor = new FeatureExtractor();
         List<FeatureVector> allVectors = new ArrayList<>();
-        
-        for (Article a : articles) {
-            allVectors.add(extractor.extractFeatures(a));
-        }
-        // Fixed seed for reproducibility - zbiór mieszany zawsze tak samo
-        Collections.shuffle(allVectors, new Random(42)); 
-
-        // Default mask (all 12 features active)
-        BitSet allFeatures = new BitSet(12);
-        allFeatures.set(0, 12);
 
         // List of all classes for detailed reporting
         String[] classNames = {"west-germany", "usa", "france", "uk", "canada", "japan"};
+
+        Map<String, Integer> countsPerCategory = new HashMap<>();
+        for (String cls : classNames) countsPerCategory.put(cls, 0);  
+
+        for (Article a : articles) {
+            allVectors.add(extractor.extractFeatures(a));
+            String label = extractor.extractFeatures(a).getLabel();
+            countsPerCategory.put(label, countsPerCategory.getOrDefault(label, 0) + 1);
+            
+        }
+
+        finalReport.append("## Dataset Statistics\n");
+        finalReport.append("- **Total texts processed (filtered):** ").append(allVectors.size()).append("\n");
+        for (Map.Entry<String, Integer> entry : countsPerCategory.entrySet()) {
+            finalReport.append(String.format("- %s: %d texts\n", entry.getKey(), entry.getValue()));
+        }
+        finalReport.append("\n");
+
+        // Fixed seed for reproducibility - zbiór mieszany zawsze tak samo
+        Collections.shuffle(allVectors, new Random(42)); 
+
+        BitSet allFeatures = new BitSet(12);
+        allFeatures.set(0, 12);
+
+        
 
         // --- EXPERIMENT 1: K-Value Tuning ---
         finalReport.append("## 1. Performance depending on K parameter (Metric: EUCLIDEAN, Split: 60/40)\n");
@@ -66,10 +81,10 @@ public class Main {
         
         Map<String, BitSet> subsets = new LinkedHashMap<>();
         
+        //f7-f9,f12
         BitSet noDateline = new BitSet(12); 
-        noDateline.set(0, 12); // Włączamy wszystkie...
-        noDateline.clear(9);  
-        subsets.put("Bez najsilniejszej cechy (Brak F9 Dateline)", noDateline);
+        noDateline.set(6, 9); 
+        subsets.put("F7-F9, F12", noDateline);
         
         BitSet onlyNumeric = new BitSet(12); 
         onlyNumeric.set(0, 8);
